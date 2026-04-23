@@ -13,6 +13,14 @@
     {% for card in cards %}
         <div class="col-md-4 mb-4">
             <div class="card shadow-sm h-100">
+                {% if card['image_url'] %}
+                <img
+                    src="{{ card['image_url'] }}/low.webp"
+                    class="card-img-top p-2"
+                    alt="{{ card['card_name'] }}"
+                    style="height:220px; object-fit:contain;"
+                >
+                {% endif %}
                 <div class="card-body">
                     <h5 class="card-title text-primary fw-bold">{{ card['card_name'] }}</h5>
                     <h6 class="card-subtitle mb-2 text-muted">{{ card['rarity'] }}</h6>

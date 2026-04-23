@@ -21,7 +21,20 @@
             <tbody>
                 {% for item in watchlist %}
                 <tr>
-                    <td class="align-middle fw-bold">{{ item['card_name'] }}</td>
+                    <td class="align-middle">
+                        <div class="d-flex align-items-center gap-2">
+                            {% if item['image_url'] %}
+                                <img
+                                    src="{{ item['image_url'] }}/low.webp"
+                                    alt="{{ item['card_name'] }}"
+                                    style="width:60px; height:84px; object-fit:contain;"
+                                    class="rounded shadow-sm"
+                                >
+                            {% endif %}
+
+                            <span class="fw-bold">{{ item['card_name'] }}</span>
+                        </div>
+                    </td>
                     <td class="align-middle">{{ item['rarity'] }}</td>
                     <td class="align-middle">${{ "%.2f"|format(item['target_price']) }}</td>
 
