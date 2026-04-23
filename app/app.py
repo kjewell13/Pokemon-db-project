@@ -6,7 +6,8 @@ sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from db import get_db, close_db
 from services.db_service import (
     create_user,
-    get_watchlist
+    get_watchlist,
+    refresh_card_market_price,
     # create_set,
     # create_card,
     # create_card_from_api,
@@ -212,6 +213,17 @@ def add_to_watchlist():
 
     return redirect(f"/card/{card_id}")
 
+
+@app.route("/card/<int:card_id>/refresh_price", methods=["POST"])
+def refresh_price(card_id):
+    refresh_card_market_price(card_id)
+
+    next_url = request.form.get("next")
+
+    if next_url:
+        return redirect(next_url)
+
+    return redirect(f"/card/{card_id}")
 
 
 if __name__ == "__main__":

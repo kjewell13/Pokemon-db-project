@@ -10,9 +10,73 @@
         <table class="table table-striped table-hover shadow-sm">
             <thead class="table-dark">
                 <tr>
-                    <th>PokÃ©mon Card</th>
+                    <th>Pokémon Card</th>
                     <th>Rarity</th>
                     <th>Target Price</th>
+                    <th>Current Price</th>
+                    <th>Alert Condition</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in watchlist %}
+                <tr>
+                    <td class="align-middle fw-bold">{{ item['card_name'] }}</td>
+                    <td class="align-middle">{{ item['rarity'] }}</td>
+                    <td class="align-middle">${{ "%.2f"|format(item['target_price']) }}</td>
+
+                    <td class="align-middle">
+                        {% if item['current_price'] is not none %}
+                            <span class="fw-bold text-success">
+                                ${{ "%.2f"|format(item['current_price']) }}
+                            </span>
+                            {% if item['price_source'] %}
+                                <br>
+                                <small class="text-muted">{{ item['price_source'] }}</small>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">Not fetched yet</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="align-middle">
+                        <span class="badge {% if item['alert_direction'] == 'below' %}bg-danger{% else %}bg-success{% endif %}">
+                            Alert when {{ item['alert_direction'] }}
+                        </span>
+                    </td>
+
+                    <td class="align-middle">
+                        <div class="d-flex gap-2">
+                            <form action="/card/{{ item['card_id'] }}/refresh_price" method="POST">
+                                <input type="hidden" name="next" value="/user_watchlist/1">
+                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                    Refresh Price
+                                </button>
+                            </form>
+
+                            <button class="btn btn-sm btn-outline-danger">Remove</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        You don't have any cards on your watchlist yet. Go search for some!
+    </div>
+{% endif %}
+
+<!-- {% if watchlist %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Pokémon Card</th>
+                    <th>Rarity</th>
+                    <th>Target Price</th>
+                    <th>Current Price</th>
                     <th>Alert Condition</th>
                     <th>Actions</th>
                 </tr>
@@ -40,5 +104,5 @@
     <div class="alert alert-info">
         You don't have any cards on your watchlist yet. Go search for some!
     </div>
-{% endif %}
+{% endif %} -->
 {% endblock %}

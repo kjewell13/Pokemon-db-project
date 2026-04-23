@@ -18,6 +18,24 @@
             Set: {{ card['set_name'] }} | Number: {{ card['card_number'] }} | Rarity: {{ card['rarity'] }}
         </p>
 
+        <div class="mb-4">
+            <form action="/card/{{ card['card_id'] }}/refresh_price" method="POST">
+                <button type="submit" class="btn btn-outline-success">
+                    Get Current Market Price
+                </button>
+            </form>
+        </div>
+        {% if history %}
+            <div class="alert alert-success shadow-sm">
+                <strong>Latest Stored Market Price:</strong>
+                ${{ "%.2f"|format(history[0]['price_value']) }}
+                <br>
+                <small class="text-muted">
+                    Source: {{ history[0]['source'] }} | Updated: {{ history[0]['recorded_at'] }}
+                </small>
+            </div>
+        {% endif %}
+
         <div class="card shadow-sm border-primary mb-4">
             <div class="card-header bg-primary text-white fw-bold">Add to Watchlist</div>
             <div class="card-body">
