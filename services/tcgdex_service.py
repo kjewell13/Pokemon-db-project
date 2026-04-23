@@ -30,6 +30,14 @@ def get_cards_by_set(set_id: str):
     )
 
 
+def fetch_all_sets():
+    return tcgdex.set.listSync()
+
+def fetch_cards_by_set(tcgdex_set_id: str):
+    return tcgdex.card.listSync(
+        Query().equal("set.id", tcgdex_set_id)
+    )
+
 if __name__ == "__main__":
     card = get_card_by_id("swsh3-136")
     print(f"Found: {card.name} ({card.localId}/{card.set.cardCount.total})")

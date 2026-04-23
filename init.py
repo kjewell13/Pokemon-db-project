@@ -1,7 +1,7 @@
 import sqlite3
 
 def create_database():
-    conn = sqlite3.connect("pokemon_tracker.db")
+    conn = sqlite3.connect("database/pokemon_tracker.db")
     cur = conn.cursor()
 
     cur.execute("PRAGMA foreign_keys = ON;")
@@ -19,6 +19,7 @@ def create_database():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS sets (
         set_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tcgdex_set_id TEXT NOT NULL UNIQUE,
         set_name TEXT NOT NULL,
         release_date TEXT,
         series TEXT
@@ -28,6 +29,7 @@ def create_database():
     cur.execute("""
     CREATE TABLE IF NOT EXISTS cards (
         card_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tcgdex_card_id TEXT NOT NULL UNIQUE,
         card_name TEXT NOT NULL,
         card_number TEXT,
         rarity TEXT,
@@ -59,7 +61,8 @@ def create_database():
         alert_direction TEXT,
         date_added TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(user_id),
-        FOREIGN KEY (card_id) REFERENCES cards(card_id)
+        FOREIGN KEY (card_id) REFERENCES cards(card_id),
+        UNIQUE(user_id, card_id)
     );
     """)
 

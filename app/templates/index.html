@@ -1,0 +1,13 @@
+{% extends "base.html" %} 
+{% block title %}Home - PokéTracker{% endblock %} 
+{% block content %}
+<div class="text-center mt-5">
+    <h1 class="display-4 fw-bold">Welcome to PokéTracker</h1>
+    <p class="lead">Search for your favorite Pokémon cards, track market prices, and build your ultimate watchlist.</p>
+    
+    <form action="/search_cards" method="GET" class="d-flex justify-content-center mt-4">
+        <input type="text" name="q" class="form-control w-50 me-2" placeholder="Search for a card (e.g., Charizard)">
+        <button type="submit" class="btn btn-primary btn-lg">Search</button>
+    </form>
+</div>
+{% endblock %}

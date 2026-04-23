@@ -1,0 +1,31 @@
+{% extends "base.html" %} 
+{% block title %}Search Results{% endblock %} 
+{% block content %}
+<h2 class="mb-4">Search Results for "{{ search_term }}"</h2>
+
+<form action="/search_cards" method="GET" class="d-flex mb-4">
+    <input type="text" name="q" class="form-control me-2" value="{{ search_term }}" placeholder="Search again...">
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
+{% if cards %}
+    <div class="row">
+    {% for card in cards %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-primary fw-bold">{{ card['card_name'] }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ card['rarity'] }}</h6>
+                    <p class="card-text">Set ID: {{ card['set_id'] }}</p>
+                    <a href="/card/{{ card['card_id'] }}" class="btn btn-outline-primary btn-sm">View Details</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-warning shadow-sm">
+        No cards found matching your search.
+    </div>
+{% endif %} 
+{% endblock %}
