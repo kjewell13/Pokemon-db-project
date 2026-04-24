@@ -58,7 +58,28 @@ def get_watchlist(user_id):
     #     WHERE users.user_id = ?
     # """, (user_id,)).fetchall()
 
+def get_average_watchlist_price(user_id):
+    db = get_db()
 
+    row = db.execute("""
+        SELECT AVG(latest_prices.price_value) AS average_price
+        FROM watchlist w
+        JOIN (
+            SELECT ph.card_id, ph.price_value
+            FROM price_history ph
+            JOIN (
+                SELECT card_id, MAX(recorded_at) AS latest_recorded_at
+                FROM price_history
+                GROUP BY card_id
+            ) latest
+                ON ph.card_id = latest.card_id
+               AND ph.recorded_at = latest.latest_recorded_at
+        ) latest_prices
+            ON w.card_id = latest_prices.card_id
+        WHERE w.user_id = ?
+    """, (user_id,)).fetchone()
+
+    return row["average_price"]
 
 def insert_set_to_db(tcgdex_set_id, set_name, release_date, series):
     db = get_db()

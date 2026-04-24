@@ -8,6 +8,7 @@ from services.db_service import (
     create_user,
     get_watchlist,
     refresh_card_market_price,
+    get_average_watchlist_price
     # create_set,
     # create_card,
     # create_card_from_api,
@@ -141,8 +142,9 @@ def update_email():
 def user_watchlist(user_id):
     
     rows = get_watchlist(user_id)
+    average_price = get_average_watchlist_price(user_id)
 
-    return render_template("watchlist.html", watchlist=rows)
+    return render_template("watchlist.html", watchlist=rows, average_price=average_price)
 
     # output = "<h1>User Watchlist</h1>"
     # for row in rows:
