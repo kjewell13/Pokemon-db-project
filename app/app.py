@@ -215,6 +215,18 @@ def add_to_watchlist():
 
     return redirect(f"/card/{card_id}")
 
+@app.route("/remove_from_watchlist/<int:watchlist_id>", methods=["POST"])
+def remove_from_watchlist(watchlist_id):
+    db = get_db()
+
+    db.execute("""
+        DELETE FROM watchlist
+        WHERE watchlist_id = ?
+    """, (watchlist_id,))
+    db.commit()
+
+    return redirect("/user_watchlist/1")
+
 
 @app.route("/card/<int:card_id>/refresh_price", methods=["POST"])
 def refresh_price(card_id):

@@ -78,7 +78,11 @@
                                 </button>
                             </form>
 
-                            <button class="btn btn-sm btn-outline-danger">Remove</button>
+                            <form action="/remove_from_watchlist/{{ item['watchlist_id'] }}" method="POST">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    Remove
+                                </button>
+                            </form>
                         </div>
                     </td>
                 </tr>
