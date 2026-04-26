@@ -58,6 +58,237 @@ def get_watchlist(user_id):
     #     WHERE users.user_id = ?
     # """, (user_id,)).fetchall()
 
+def get_watchlist_price_analysis(user_id):
+    db = get_db()
+
+    return db.execute("""
+        SELECT
+            w.watchlist_id,
+            w.user_id,
+            w.card_id,
+            w.target_price,
+            w.alert_direction,
+            w.date_added,
+
+            c.card_name,
+            c.card_number,
+            c.rarity,
+            c.type,
+            c.image_url,
+
+            s.set_name,
+
+            p.price_value AS current_price,
+            p.source AS price_source,
+            p.recorded_at AS price_updated_at,
+
+            ROUND(p.price_value - w.target_price, 2) AS price_difference,
+
+            CASE
+                WHEN p.price_value IS NULL THEN NULL
+                WHEN w.target_price IS NULL OR w.target_price = 0 THEN NULL
+                ELSE ROUND(((p.price_value - w.target_price) / w.target_price) * 100, 2)
+            END AS percent_difference,
+
+            CASE
+                WHEN p.price_value IS NULL THEN 'No Price Data'
+                WHEN w.target_price IS NULL OR w.target_price = 0 THEN 'No Target'
+
+                WHEN w.alert_direction = 'below'
+                    AND p.price_value <= w.target_price
+                THEN 'Triggered'
+
+                WHEN w.alert_direction = 'above'
+                    AND p.price_value >= w.target_price
+                THEN 'Triggered'
+
+                WHEN ABS((p.price_value - w.target_price) / w.target_price) <= 0.10
+                THEN 'Buy Now'
+
+                WHEN ABS((p.price_value - w.target_price) / w.target_price) <= 0.20
+                THEN 'Almost There'
+
+                WHEN ABS((p.price_value - w.target_price) / w.target_price) <= 0.30
+                THEN 'Keep Watching'
+
+                ELSE 'Not Close'
+            END AS alert_status
+
+        FROM watchlist w
+        JOIN cards c ON w.card_id = c.card_id
+        LEFT JOIN sets s ON c.set_id = s.set_id
+        LEFT JOIN price_history p ON p.price_id = (
+            SELECT ph.price_id
+            FROM price_history ph
+            WHERE ph.card_id = c.card_id
+            ORDER BY ph.recorded_at DESC
+            LIMIT 1
+        )
+        WHERE w.user_id = ?
+        ORDER BY
+            CASE
+                WHEN p.price_value IS NULL THEN 7
+                WHEN w.target_price IS NULL OR w.target_price = 0 THEN 6
+
+                WHEN w.alert_direction = 'below'
+                    AND p.price_value <= w.target_price
+                THEN 1
+
+                WHEN w.alert_direction = 'above'
+                    AND p.price_value >= w.target_price
+                THEN 1
+
+                WHEN ABS((p.price_value - w.target_price) / w.target_price) <= 0.10
+                THEN 2
+
+                WHEN ABS((p.price_value - w.target_price) / w.target_price) <= 0.20
+                THEN 3
+
+                WHEN ABS((p.price_value - w.target_price) / w.target_price) <= 0.30
+                THEN 4
+
+                ELSE 5
+            END,
+            ABS(p.price_value - w.target_price) ASC
+    """, (user_id,)).fetchall()
+
+def get_watchlist_analysis_stats(user_id):
+    db = get_db()
+
+    return db.execute("""
+        SELECT
+            COUNT(*) AS total_cards,
+            COUNT(p.price_value) AS cards_with_price_data,
+            COUNT(*) - COUNT(p.price_value) AS cards_missing_price_data,
+            ROUND(AVG(p.price_value), 2) AS average_current_price,
+            ROUND(SUM(p.price_value), 2) AS total_estimated_value,
+            ROUND(MAX(p.price_value), 2) AS highest_current_price,
+            ROUND(MIN(p.price_value), 2) AS lowest_current_price,
+
+            SUM(
+                CASE
+                    WHEN p.price_value IS NOT NULL
+                         AND w.target_price IS NOT NULL
+                         AND w.target_price > 0
+                         AND w.alert_direction = 'below'
+                         AND p.price_value <= w.target_price
+                    THEN 1
+
+                    WHEN p.price_value IS NOT NULL
+                         AND w.target_price IS NOT NULL
+                         AND w.target_price > 0
+                         AND w.alert_direction = 'above'
+                         AND p.price_value >= w.target_price
+                    THEN 1
+
+                    ELSE 0
+                END
+            ) AS triggered_count,
+
+            SUM(
+                CASE
+                    WHEN p.price_value IS NOT NULL
+                         AND w.target_price IS NOT NULL
+                         AND w.target_price > 0
+                         AND ABS((p.price_value - w.target_price) / w.target_price) <= 0.10
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS buy_now_count,
+
+            SUM(
+                CASE
+                    WHEN p.price_value IS NOT NULL
+                         AND w.target_price IS NOT NULL
+                         AND w.target_price > 0
+                         AND ABS((p.price_value - w.target_price) / w.target_price) > 0.10
+                         AND ABS((p.price_value - w.target_price) / w.target_price) <= 0.20
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS almost_there_count,
+
+            SUM(
+                CASE
+                    WHEN p.price_value IS NOT NULL
+                         AND w.target_price IS NOT NULL
+                         AND w.target_price > 0
+                         AND ABS((p.price_value - w.target_price) / w.target_price) > 0.20
+                         AND ABS((p.price_value - w.target_price) / w.target_price) <= 0.30
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS keep_watching_count,
+
+            (
+                SELECT c2.card_name
+                FROM watchlist w2
+                JOIN cards c2 ON w2.card_id = c2.card_id
+                LEFT JOIN price_history p2 ON p2.price_id = (
+                    SELECT ph2.price_id
+                    FROM price_history ph2
+                    WHERE ph2.card_id = c2.card_id
+                    ORDER BY ph2.recorded_at DESC
+                    LIMIT 1
+                )
+                WHERE w2.user_id = ?
+                  AND p2.price_value IS NOT NULL
+                  AND w2.target_price IS NOT NULL
+                  AND w2.target_price > 0
+                ORDER BY ABS(p2.price_value - w2.target_price) ASC
+                LIMIT 1
+            ) AS best_opportunity_card,
+
+            (
+                SELECT ROUND(ABS(p2.price_value - w2.target_price), 2)
+                FROM watchlist w2
+                JOIN cards c2 ON w2.card_id = c2.card_id
+                LEFT JOIN price_history p2 ON p2.price_id = (
+                    SELECT ph2.price_id
+                    FROM price_history ph2
+                    WHERE ph2.card_id = c2.card_id
+                    ORDER BY ph2.recorded_at DESC
+                    LIMIT 1
+                )
+                WHERE w2.user_id = ?
+                  AND p2.price_value IS NOT NULL
+                  AND w2.target_price IS NOT NULL
+                  AND w2.target_price > 0
+                ORDER BY ABS(p2.price_value - w2.target_price) ASC
+                LIMIT 1
+            ) AS best_opportunity_difference,
+
+            (
+                SELECT ROUND(ABS((p2.price_value - w2.target_price) / w2.target_price) * 100, 2)
+                FROM watchlist w2
+                JOIN cards c2 ON w2.card_id = c2.card_id
+                LEFT JOIN price_history p2 ON p2.price_id = (
+                    SELECT ph2.price_id
+                    FROM price_history ph2
+                    WHERE ph2.card_id = c2.card_id
+                    ORDER BY ph2.recorded_at DESC
+                    LIMIT 1
+                )
+                WHERE w2.user_id = ?
+                  AND p2.price_value IS NOT NULL
+                  AND w2.target_price IS NOT NULL
+                  AND w2.target_price > 0
+                ORDER BY ABS((p2.price_value - w2.target_price) / w2.target_price) ASC
+                LIMIT 1
+            ) AS best_opportunity_percent
+
+        FROM watchlist w
+        JOIN cards c ON w.card_id = c.card_id
+        LEFT JOIN price_history p ON p.price_id = (
+            SELECT ph.price_id
+            FROM price_history ph
+            WHERE ph.card_id = c.card_id
+            ORDER BY ph.recorded_at DESC
+            LIMIT 1
+        )
+        WHERE w.user_id = ?
+    """, (user_id, user_id, user_id, user_id)).fetchone()
+
 def get_average_watchlist_price(user_id):
     db = get_db()
 

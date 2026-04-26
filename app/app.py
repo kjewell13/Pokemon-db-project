@@ -8,7 +8,9 @@ from services.db_service import (
     create_user,
     get_watchlist,
     refresh_card_market_price,
-    get_average_watchlist_price
+    get_average_watchlist_price,
+    get_watchlist_price_analysis,
+    get_watchlist_analysis_stats
     # create_set,
     # create_card,
     # create_card_from_api,
@@ -157,6 +159,13 @@ def user_watchlist(user_id):
     #     """
 
     # return output
+
+@app.route("/watchlist_analysis/<int:user_id>")
+def watchlist_analysis(user_id):
+    analysis_rows = get_watchlist_price_analysis(user_id)
+    stats = get_watchlist_analysis_stats(user_id)
+
+    return render_template("watchlist_analysis.html", analysis=analysis_rows, stats=stats, user_id=user_id)
 
 @app.route("/average_price/<int:card_id>")
 def average_price(card_id):
